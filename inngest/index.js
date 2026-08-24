@@ -102,7 +102,7 @@ const leaveApplicationReminder = inngest.createFunction(
 
 //cron:check attendance at 11:30 A.M IST(06:00 UTC) and email absent employees
 const attendanceReminderCron = inngest.createFunction(
-  { id: "attendance-reminder-cron", triggers: [{ cron: "TZ=ASIA/Kolkata 30 11 * * *" }] },
+  { id: "attendance-reminder-cron", triggers: [{ cron: "TZ=Asia/Kolkata 30 11 * * *" }] },
   // 06:00 UTC = 11:30 AM IST
   async ({ event, step }) => {
     // step1: get todays'date range
