@@ -81,13 +81,13 @@ const leaveApplicationReminder = inngest.createFunction(
 
     if (leaveApplication?.status === "PENDING") {
       const employee = await Employee.findById(leaveApplication.employeeId);
-    }
-    //send reminder email to admin to take action on leave application
+      if (!employee) return;
 
-    await sendEmail({
-      to: process.env.ADMIN_EMAIL,
-      subject: `Leave Application Reminder`,
-      body: `<div style="max-width: 600px;">
+      //send reminder email to admin to take action on leave application
+      await sendEmail({
+        to: process.env.ADMIN_EMAIL,
+        subject: `Leave Application Reminder`,
+        body: `<div style="max-width: 600px;">
     <h2>Hi Admin, 👋</h2>
     <p style="font-size: 16px;">You have a leave application in ${employee.department} today:</p>
     <p style="font-size: 18px; font-weight: bold; color: #007bff; margin: 8px 0;">${leaveApplication?.startDate?.toLocaleDateString()}</p>
@@ -96,7 +96,8 @@ const leaveApplicationReminder = inngest.createFunction(
     <p style="font-size: 16px;">Best Regards,</p>
     <p style="font-size: 16px;">EMS</p>
     </div>`,
-    });
+      });
+    }
   },
 );
 
@@ -120,7 +121,7 @@ const attendanceReminderCron = inngest.createFunction(
     const activeEmployees = await step.run("get-active-employees", async () => {
       const employees = await Employee.find({
         isDeleted: false,
-        employmentStatus: "ACTIVE",
+        employeeStatus: "ACTIVE",
       }).lean();
       return employees.map((e) => ({
         _id: e._id.toString(),
@@ -147,7 +148,7 @@ const attendanceReminderCron = inngest.createFunction(
       const attendances = await Attendance.find({
         date: { $gte: new Date(today.startUTC), $lt: new Date(today.endUTC) },
       }).lean();
-      return attendance.map((a) => a.employeeId.toString());
+      return attendances.map((a) => a.employeeId.toString());
     });
 
     //step5 : filter absent employees (not on leave & not checked in)
@@ -161,7 +162,7 @@ const attendanceReminderCron = inngest.createFunction(
       await step.run("send-reminder-emails", async () => {
         const emailPromises = absentEmployees.map((emp) => {
           //send email
-          sendEmail({
+          return sendEmail({
             to: emp.email,
             subject: "Attendance Reminder - Please Mark Your Attendance",
             body: `
@@ -179,6 +180,7 @@ const attendanceReminderCron = inngest.createFunction(
                         `,
           });
         });
+        await Promise.all(emailPromises);
       });
     }
 

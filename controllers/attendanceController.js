@@ -26,14 +26,14 @@ export const clockInOut = async (req, res) => {
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const existing = await Attendance.findBy({
+    const existing = await Attendance.findOne({
       employeeId: employee._id,
       date: today,
     });
 
     const now = new Date();
     if (!existing) {
-      const isLate = now.getHours() >= 9 && now.getMinutes() < 0;
+      const isLate = now.getHours() >= 9;
       const attendance = await Attendance.create({
         employeeId: employee._id,
         date: today,
@@ -45,7 +45,7 @@ export const clockInOut = async (req, res) => {
         name:"employee/check-out",
         data : {
           employeeId : employee._id,
-          attendanceId : attendance_id,
+          attendanceId : attendance._id,
         }
       })
 
@@ -117,11 +117,11 @@ export const getAttendance = async (req, res) => {
     }).sort({date : -1}).limit(limit);
 
     return res.json({
-        date : history,
-        employee : {
-            isDeleted : employee.isDeleted
-        }
-    })
+      data: history,
+      employee: {
+        isDeleted: employee.isDeleted,
+      },
+    });
   } catch (error) {
     return res.status(500).json({
       error: "failed to fetch attendance",

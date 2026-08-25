@@ -1,7 +1,6 @@
 // GET employees
 //get /api/employees
 
-import e from "express";
 import Employee from "../models/Employee.js";
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
@@ -9,13 +8,13 @@ import User from "../models/User.js";
 export const getEmployees = async (req, res) => {
   try {
     const { department } = req.query;
-    const where = {};
+    const where = { isDeleted: { $ne: true } };
     if (department) {
       where.department = department;
     }
 
-    const employees = (await Employee.find(where))
-      .toSorted({
+    const employees = await Employee.find(where)
+      .sort({
         createdAt: -1,
       })
       .populate("userId", "email role")
@@ -45,6 +44,7 @@ export const createEmployee = async (req, res) => {
       lastName,
       email,
       phoneNumber,
+      password,
       position,
       basicSalary,
       allowances,
@@ -52,9 +52,10 @@ export const createEmployee = async (req, res) => {
       joinDate,
       bio,
       department,
+      role,
     } = req.body;
 
-    if (!firstName || !password || !email || !lastName) {
+    if (!firstName || !lastName || !email || !password || !phoneNumber || !position || !joinDate) {
       return res.status(400).json({ error: "missing required fields" });
     }
 
@@ -62,7 +63,7 @@ export const createEmployee = async (req, res) => {
     const user = await User.create({
       email,
       password: hashed,
-      role: role || "Employee",
+      role: role || "EMPLOYEE",
     });
 
     const employee = await Employee.create({
@@ -70,7 +71,7 @@ export const createEmployee = async (req, res) => {
       firstName,
       lastName,
       email,
-      phone,
+      phoneNumber,
       position,
       department: department || "Engineering",
       basicSalary: Number(basicSalary) || 0,
@@ -107,7 +108,7 @@ export const updateEmployee = async (req, res) => {
       role,
       password,
       department,
-      employmentStatus,
+      employeeStatus,
     } = req.body;
 
     const employee = await Employee.findById(id);
@@ -120,13 +121,13 @@ export const updateEmployee = async (req, res) => {
       firstName,
       lastName,
       email,
-      phone,
+      phoneNumber,
       position,
       department: department || "Engineering",
       basicSalary: Number(basicSalary) || 0,
       allowances: Number(allowances) || 0,
       deductions: Number(deductions) || 0,
-      employmentStatus: employmentStatus || "ACTIVE",
+      employeeStatus: employeeStatus || "ACTIVE",
       bio: bio || "",
     });
     // update user record
@@ -161,7 +162,7 @@ export const deleteEmployee = async (req, res) => {
       return res.status(404).json({ error: "Employee not found" });
     }
     employee.isDeleted = true;
-    employee.employmentStatus = "INACTIVE";
+    employee.employeeStatus = "INACTIVE";
     await employee.save();
     return res.json({ success: true });
   } catch (error) {

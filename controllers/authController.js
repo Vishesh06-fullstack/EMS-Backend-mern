@@ -67,7 +67,7 @@ export const session = (req , res) => {
 }
 
 // change password for emmployee and admin
-// post  /api/auth/changepassword
+// post  /api/auth/change-password
 
 export const changePassword = async(req , res) => {
     try {

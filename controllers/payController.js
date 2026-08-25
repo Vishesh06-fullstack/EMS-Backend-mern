@@ -15,6 +15,13 @@ export const createPayslip = async (req, res) => {
       });
     }
 
+    const employee = await Employee.findById(employeeId);
+    if (!employee || employee.isDeleted) {
+      return res.status(404).json({
+        error: "Employee not found",
+      });
+    }
+
     const netSalary =
       Number(basicSalary) + Number(allowances || 0) - Number(deductions || 0);
     const payslip = await Payslip.create({
@@ -45,7 +52,7 @@ export const getPayslips = async (req, res) => {
     const session = req.session;
     const isAdmin = session.role === "ADMIN";
     if (isAdmin) {
-      const paySlips = (await Payslip.find().populate("employeeId")).toSorted({
+      const paySlips = await Payslip.find().populate("employeeId").sort({
         createdAt: -1,
       });
       const data = paySlips.map((p) => {

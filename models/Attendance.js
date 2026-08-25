@@ -6,7 +6,6 @@ const attendanceSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
       required: true,
-      unique: true,
     },
     date: {
       type: Date,
@@ -47,5 +46,5 @@ attendanceSchema.index({
 });
 
 const Attendance =
-  mongoose.models.User || mongoose.model("Attendance", attendanceSchema);
+  mongoose.models.Attendance || mongoose.model("Attendance", attendanceSchema);
 export default Attendance;
